@@ -10,5 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "word-to-number-node": "^1.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17"
   }
 }

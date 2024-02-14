@@ -1,0 +1,14 @@
+{
+  "name": "letterscript",
+  "version": "1.0.0",
+  "description": "daft language",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "tsc index.ts && node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "word-to-number-node": "^1.0.3"
+  }
+}

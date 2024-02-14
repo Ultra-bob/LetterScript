@@ -1,6 +1,9 @@
 # compiled stuff lol
 *.js
 
+# pnpm
+pnpm-lock.yaml
+
 # Logs
 logs
 *.log

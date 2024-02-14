@@ -8,10 +8,10 @@
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "word-to-number-node": "^1.0.3"
-  },
   "devDependencies": {
     "@types/node": "^20.11.17"
+  },
+  "dependencies": {
+    "words-to-numbers": "^1.5.1"
   }
 }

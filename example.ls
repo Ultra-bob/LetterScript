@@ -1,1 +1,5 @@
-FN ADD one point five PLUS twenty five END
+IF true THEN
+FN PRINT nallssl END
+ELSE
+FN PRINT no END
+END

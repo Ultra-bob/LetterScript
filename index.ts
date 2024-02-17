@@ -2,16 +2,28 @@ import wordsToNumbers from 'words-to-numbers';
 const fs = require( "fs" )
 const util = require('util')
 
-const Keywords = ["FN", "END", "FUNCTION", "RETURN", "IF"]
-const BLOCK_STARTERS = ["FN", "FUNCTION", "IF", "RETURN"]
+const KEYWORDS = ["END", "FN", "FUNCTION", "RETURN", "IF", "CMP"]
+const BLOCK_STARTERS = KEYWORDS.slice(1)
 
 class Token {
     type: TokenType
-    value: string | number | Block
+    value: string | number | boolean | Block
 
     constructor(type, value) {
         this.type = type
         this.value = value
+    }
+
+    is_argument() {
+        return this.type == TokenType.ArgumentName || (this.type == TokenType.Keyword && this.is_starter())
+    }
+
+    is_starter() {
+        return BLOCK_STARTERS.includes(this.value as string)
+    }
+
+    is_value() {
+        return VALUES.includes(this.type)
     }
 }
 
@@ -33,7 +45,7 @@ enum TokenType {
 const VALUES = [TokenType.Number, TokenType.String, TokenType.Boolean]
 
 function whar(token: any): TokenType {
-    if (Keywords.includes(token)) {
+    if (KEYWORDS.includes(token)) {
         return TokenType.Keyword
     } else if (token === token.toUpperCase()) {
         return TokenType.ArgumentName
@@ -69,7 +81,7 @@ function tokenize(code: string): Token[] {
 function get_blocklevels(tokens: Token[]) {
     let block_level = 0
     const block_levels = tokens.map(token => {
-        if (token.type == TokenType.Keyword && BLOCK_STARTERS.includes(token.value as string)) {
+        if (token.is_starter()) {
             block_level++
         } else if (token.type == TokenType.Keyword && token.value == "END") {
             block_level--
@@ -90,20 +102,53 @@ function make_blocks(tokens: Token[], block_levels: number[]): Block[] {
         let last_token = tokens[index - 1]
         ////console.log(`${last_token?.type} - ${token?.type}`)
         if ( last_level == level - 1 ) {
-            console.log(`Starting Block at level ${level}`)
+            ////console.log(`Starting Block at level ${level}`)
             let block = {type: token.value as string, attrs: new Map()}
-            if (last_token?.type == TokenType.ArgumentName) blocks_by_level[last_level].attrs[last_token.value as string] = block
+            //@ts-expect-error
+            if (last_token?.is_argument()) blocks_by_level[last_level].attrs.set(last_token.value as string, block)
             blocks_by_level[level] = block
         } else if ( last_level == level + 1 ) {
-            console.log(`Ending Block at level ${last_level}`)
-            blocks.push(blocks_by_level.splice(last_level, 1)[0])
-        } else if ( VALUES.includes(token.type) && last_token.type == TokenType.ArgumentName ) {
-            console.log(`Setting ${last_token.value} = ${token.value} on block ${level}`)
-            blocks_by_level[level].attrs[last_token.value as string] = token
+            ////console.log(`Ending Block at level ${last_level}`)
+            if (level == 0) blocks.push(blocks_by_level.splice(last_level, 1)[0])
+        } else if ( token.is_value() && last_token.is_argument() ) {
+            ////console.log(`Setting ${last_token.value} = ${token.value} on block ${level}`)
+            blocks_by_level[level].attrs.set(last_token.value as string, token)
         }
     });
     return blocks
 }
 
+function evaluate(block: Block | Token) {
+    if(!block) {
+        console.error(`EVALUATION ERROR! Undefined token encountered`)
+    }
+
+    //console.log("Evaluating")
+    //console.log(block)
+    if (block.type == "FN") {
+        let fn_name = block.attrs.keys().next().value
+        let args = Array.from(block.attrs.values())
+        if (fn_name == "PRINT") console.log(evaluate(args[0]))
+        if (fn_name == "MOD") return evaluate(args[0]) % evaluate(args[1])
+    } else if (block.type == "CMP") {
+        let operator = Array.from(block.attrs.keys())[1]
+        //console.log(operator)
+        let [a, b] = Array.from(block.attrs.values())
+        a = evaluate(a)
+        b = evaluate(b)
+        if (operator == "IS") return a == b
+        else if (operator == "LESS") return a < b
+        else if (operator == "GREATER") return a > b
+    }
+
+    //@ts-expect-error | base case
+    return block.value
+}
+
+if (!/^[a-zA-Z\n ]+$/g.test(code)) console.log("ERROR! Non-letter characters used")
 const tokens = tokenize(code)
-console.log(util.inspect(make_blocks(tokens, get_blocklevels(tokens)), {depth: null, colors: true}))
+console.log(util.inspect(tokens, {depth: null, colors: true}))
+const ast = make_blocks(tokens, get_blocklevels(tokens))
+console.log(util.inspect(ast, {depth: null, colors: true}))
+console.log("EVALUATING\n----------------")
+ast.forEach(block => evaluate(block))

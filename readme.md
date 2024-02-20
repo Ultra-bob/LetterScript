@@ -21,3 +21,5 @@ FN PRINT FN is even WITH five END END
 For example,  `ADD 1 PLUS 1`
 is the same as `add(1, plus=1)` in Python
 - Numbers are not allowed, so instead they are written like `twenty five point one two`
+- Also there isn't any scoping so every variable is global
+- No types lol

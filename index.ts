@@ -2,7 +2,7 @@ import wordsToNumbers from 'words-to-numbers';
 const fs = require( "fs" )
 const util = require('util')
 
-const KEYWORDS = ["END", "FN", "FUNCTION", "RETURN", "IF", "CMP"]
+const KEYWORDS = ["END", "FN", "FUNCTION", "RETURN", "IF", "CMP", "SET"]
 const BLOCK_STARTERS = KEYWORDS.slice(1)
 
 class Token {
@@ -30,6 +30,12 @@ class Token {
 interface Block {
     type: string
     attrs: Map<string, Token>
+}
+
+interface Function {
+    name: string
+    arguments: string[]
+    definition: Block[]
 }
 
 enum TokenType {
@@ -118,18 +124,61 @@ function make_blocks(tokens: Token[], block_levels: number[]): Block[] {
     return blocks
 }
 
+let functions: Map<string, Function> = new Map()
+let variables: Map<string, Token> = new Map()
+let return_value = null
+
 function evaluate(block: Block | Token) {
     if(!block) {
         console.error(`EVALUATION ERROR! Undefined token encountered`)
+    }
+
+    if(block.type == "FUNCTION") {
+        const values = Array.from(block.attrs.values())
+        const name = evaluate(values[0])
+        const args = values.slice(1, -1).map(x => evaluate(x))
+        functions.set(name, {
+            name: name,
+            arguments: args,
+            //@ts-expect-error
+            definition: Array.from(block.attrs.values()).slice(-1) //TODO This is stupid and i'll fix it later
+        })
+        return
+    }
+
+    if(block.type == "IF") {
+        if (evaluate(block.attrs.get("IF")) === true) {
+            return evaluate(block.attrs.get("THEN"))
+        } else {
+            return evaluate(block.attrs.get("ELSE"))
+        }
+    }
+
+    if (block.type == "SET") {
+        variables.set(evaluate(block.attrs.get("SET")), evaluate(block.attrs.get("TO")))
+        return
+    }
+
+    if (block.type == "RETURN") {
+        return_value = evaluate(block.attrs.values().next().value)
+        return null
     }
 
     //console.log("Evaluating")
     //console.log(block)
     if (block.type == "FN") {
         let fn_name = block.attrs.keys().next().value
+        let custom_fn_name = evaluate(block.attrs.values().next().value) //! this enables cursed shenaninagnes
         let args = Array.from(block.attrs.values())
         if (fn_name == "PRINT") console.log(evaluate(args[0]))
         if (fn_name == "MOD") return evaluate(args[0]) % evaluate(args[1])
+        else if (functions.get(custom_fn_name) !== undefined) {
+            ////console.log(`Calling ${custom_fn_name}`)
+            let fn = functions.get(custom_fn_name)
+            Array.from(block.attrs.values()).slice(1).forEach((x, idx) => variables.set(fn.arguments[idx], evaluate(x)))
+            fn.definition.some(block => evaluate(block) === null)
+            return return_value
+        }
     } else if (block.type == "CMP") {
         let operator = Array.from(block.attrs.keys())[1]
         //console.log(operator)
@@ -140,8 +189,14 @@ function evaluate(block: Block | Token) {
         else if (operator == "LESS") return a < b
         else if (operator == "GREATER") return a > b
     }
+    
+    //@ts-expect-error
+    if (Array.from(variables.keys()).includes(block.value)) {
+        //@ts-expect-error
+        return variables.get(block.value)
+    }
 
-    //@ts-expect-error | base case
+    //@ts-expect-error
     return block.value
 }
 
@@ -152,3 +207,6 @@ const ast = make_blocks(tokens, get_blocklevels(tokens))
 console.log(util.inspect(ast, {depth: null, colors: true}))
 console.log("EVALUATING\n----------------")
 ast.forEach(block => evaluate(block))
+console.log("SCOPE\n----------------")
+console.log(functions)
+console.log(variables)

@@ -113,11 +113,12 @@ function make_blocks(tokens: Token[], block_levels: number[]): Block[] {
             
             if (last_token?.is_argument()) {
                 if(last_token.value === "NEXT") {
-                    console.log("setting array")
-                    let blocks = blocks_by_level[last_level].attrs.get(last_token.value as string)
+                    let last_arg = Array.from(blocks_by_level[last_level].attrs.keys()).slice(-1)[0] as string
+                    console.log(`setting array ${last_arg}`)
+                    let blocks = blocks_by_level[last_level].attrs.get(last_arg as string)
                     if (Array.isArray(blocks)) blocks.push (block)
                     //@ts-expect-error
-                    else if (blocks !== undefined) blocks_by_level[last_level].attrs.set(last_token.value as string, [blocks, block])
+                    else if (blocks !== undefined) blocks_by_level[last_level].attrs.set(last_arg, [blocks, block])
                 } else {
                 //@ts-expect-error
                 blocks_by_level[last_level].attrs.set(last_token.value as string, block)
@@ -138,10 +139,18 @@ function make_blocks(tokens: Token[], block_levels: number[]): Block[] {
 let functions: Map<string, Function> = new Map()
 let variables: Map<string, Token> = new Map()
 let return_value = null
+let break_flag = false
 
 function evaluate(block: Block | Token) {
+    //console.debug("Evaluating...", util.inspect(block, {depth: 3, colors: true}))
+
     if(!block) {
-        console.error(`EVALUATION ERROR! Undefined token encountered`)
+        //console.error(`EVALUATION ERROR! Undefined token encountered`)
+        return
+    }
+
+    if(Array.isArray(block)) {
+        return block.map(x => evaluate(x)).slice(-1)[0]
     }
 
     if(block.type == "FUNCTION") {
@@ -160,13 +169,16 @@ function evaluate(block: Block | Token) {
     if(block.type == "IF") {
         if (evaluate(block.attrs.get("IF")) === true) {
             return evaluate(block.attrs.get("THEN"))
-        } else {
+        } else if (evaluate(block.attrs.get("ELIF")) === true) {
+            return evaluate(block.attrs.get("DO"))
+        } else if (block.attrs.get("ELSE")) {
             return evaluate(block.attrs.get("ELSE"))
         }
     }
 
     if (block.type == "SET") {
-        variables.set(evaluate(block.attrs.get("SET")), evaluate(block.attrs.get("TO")))
+        //@ts-expect-error
+        variables.set(block.attrs.get("SET").value, evaluate(block.attrs.get("TO")))
         return
     }
 
@@ -175,12 +187,15 @@ function evaluate(block: Block | Token) {
         return null
     }
     if (block.type == "BREAK") {
-        return null
+        break_flag = true
     }
 
     if (block.type == "LOOP") {
+        //console.log("Starting Loop...")
         while(true) {
-            if (evaluate(block.attrs.get("LOOP")) === null) {
+            evaluate(block.attrs.get("LOOP"))
+            if (break_flag) {
+                break_flag = false
                 break
             }
         }
@@ -212,12 +227,17 @@ function evaluate(block: Block | Token) {
         if (operator == "IS") return a == b
         else if (operator == "LESS") return a < b
         else if (operator == "GREATER") return a > b
+        else if (operator == "AND") return a && b
     }
     
     //@ts-expect-error
     if (Array.from(variables.keys()).includes(block.value)) {
         //@ts-expect-error
         return variables.get(block.value)
+    }
+    //@ts-expect-error
+    if (block.value == "nothing") {
+        return ""
     }
 
     //@ts-expect-error
@@ -226,7 +246,7 @@ function evaluate(block: Block | Token) {
 
 if (!/^[a-zA-Z\n ]+$/g.test(code)) console.log("ERROR! Non-letter characters used")
 const tokens = tokenize(code)
-console.log(util.inspect(tokens, {depth: null, colors: true}))
+/////console.log(util.inspect(tokens, {depth: null, colors: true}))
 const ast = make_blocks(tokens, get_blocklevels(tokens))
 console.log(util.inspect(ast, {depth: null, colors: true}))
 console.log("EVALUATING\n----------------")

@@ -2,7 +2,7 @@ import wordsToNumbers from 'words-to-numbers';
 const fs = require( "fs" )
 const util = require('util')
 
-const KEYWORDS = ["END", "FN", "FUNCTION", "RETURN", "IF", "CMP", "SET"]
+const KEYWORDS = ["END", "FN", "LOOP", "FUNCTION", "RETURN", "IF", "CMP", "SET", "BREAK"]
 const BLOCK_STARTERS = KEYWORDS.slice(1)
 
 class Token {
@@ -110,8 +110,19 @@ function make_blocks(tokens: Token[], block_levels: number[]): Block[] {
         if ( last_level == level - 1 ) {
             ////console.log(`Starting Block at level ${level}`)
             let block = {type: token.value as string, attrs: new Map()}
-            //@ts-expect-error
-            if (last_token?.is_argument()) blocks_by_level[last_level].attrs.set(last_token.value as string, block)
+            
+            if (last_token?.is_argument()) {
+                if(last_token.value === "NEXT") {
+                    console.log("setting array")
+                    let blocks = blocks_by_level[last_level].attrs.get(last_token.value as string)
+                    if (Array.isArray(blocks)) blocks.push (block)
+                    //@ts-expect-error
+                    else if (blocks !== undefined) blocks_by_level[last_level].attrs.set(last_token.value as string, [blocks, block])
+                } else {
+                //@ts-expect-error
+                blocks_by_level[last_level].attrs.set(last_token.value as string, block)
+                }
+            }
             blocks_by_level[level] = block
         } else if ( last_level == level + 1 ) {
             ////console.log(`Ending Block at level ${last_level}`)
@@ -163,6 +174,18 @@ function evaluate(block: Block | Token) {
         return_value = evaluate(block.attrs.values().next().value)
         return null
     }
+    if (block.type == "BREAK") {
+        return null
+    }
+
+    if (block.type == "LOOP") {
+        while(true) {
+            if (evaluate(block.attrs.get("LOOP")) === null) {
+                break
+            }
+        }
+    }
+    
 
     //console.log("Evaluating")
     //console.log(block)
@@ -172,6 +195,7 @@ function evaluate(block: Block | Token) {
         let args = Array.from(block.attrs.values())
         if (fn_name == "PRINT") console.log(evaluate(args[0]))
         if (fn_name == "MOD") return evaluate(args[0]) % evaluate(args[1])
+        if (fn_name == "ADD") return evaluate(args[0]) + evaluate(args[1])
         else if (functions.get(custom_fn_name) !== undefined) {
             ////console.log(`Calling ${custom_fn_name}`)
             let fn = functions.get(custom_fn_name)

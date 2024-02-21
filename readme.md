@@ -3,17 +3,24 @@ LetterScript is a rather daft language where no characters other than the Englis
 It's called LetterScript because there are only letters and it's my first time using TypeScript (or JavaScript)
 
 ## Syntax
-is even Example
+FizzBuzz Example
 ```
-FUNCTION is even WITH number DOES
-    IF FN MOD number DIV two END THEN
-        RETURN even END
-    ELSE
-        RETURN odd END
+FUNCTION fizzbuzz WITH number DOES
+    IF CMP FN MOD number DIV three END IS zero END THEN
+        RETURN fizz END
+    END
+    IF CMP FN MOD number DIV five END IS zero END THEN
+        RETURN buzz END
     END
 END
 
-FN PRINT FN is even WITH five END END
+SET counter TO zero
+LOOP
+IF CMP counter IS one hundred THEN
+    BREAK END
+END
+FN PRINT FN fuzzbuzz WITH counter END END
+END
 ```
 
 - Language keywords are always in UPPERCASE like SQL

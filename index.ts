@@ -111,15 +111,15 @@ function make_blocks(tokens: Token[], block_levels: number[]): Block[] {
             ////console.log(`Starting Block at level ${level}`)
             let block = {type: token.value as string, attrs: new Map()}
             
-            if (last_token?.is_argument()) {
-                if(last_token.value === "NEXT") {
+            if (last_token?.is_argument() || last_token?.value === "END" && last_level !== 0) {
+                if(last_token.value === "END") {
                     let last_arg = Array.from(blocks_by_level[last_level].attrs.keys()).slice(-1)[0] as string
                     console.log(`setting array ${last_arg}`)
                     let blocks = blocks_by_level[last_level].attrs.get(last_arg as string)
                     if (Array.isArray(blocks)) blocks.push (block)
                     //@ts-expect-error
                     else if (blocks !== undefined) blocks_by_level[last_level].attrs.set(last_arg, [blocks, block])
-                } else {
+                } else if (last_token?.is_argument()) {
                 //@ts-expect-error
                 blocks_by_level[last_level].attrs.set(last_token.value as string, block)
                 }

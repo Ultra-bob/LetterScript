@@ -94,7 +94,9 @@ function get_blocklevels(tokens: Token[]) {
         }
         return block_level
     })
-
+    if(block_level !== 0) {
+        console.error("ERROR! Missing END detected")
+    }
     return block_levels
 }
 
@@ -114,7 +116,7 @@ function make_blocks(tokens: Token[], block_levels: number[]): Block[] {
             if (last_token?.is_argument() || last_token?.value === "END" && last_level !== 0) {
                 if(last_token.value === "END") {
                     let last_arg = Array.from(blocks_by_level[last_level].attrs.keys()).slice(-1)[0] as string
-                    console.log(`setting array ${last_arg}`)
+                    ////console.log(`setting array ${last_arg}`)
                     let blocks = blocks_by_level[last_level].attrs.get(last_arg as string)
                     if (Array.isArray(blocks)) blocks.push (block)
                     //@ts-expect-error
@@ -248,7 +250,7 @@ if (!/^[a-zA-Z\n ]+$/g.test(code)) console.log("ERROR! Non-letter characters use
 const tokens = tokenize(code)
 /////console.log(util.inspect(tokens, {depth: null, colors: true}))
 const ast = make_blocks(tokens, get_blocklevels(tokens))
-console.log(util.inspect(ast, {depth: null, colors: true}))
+////console.log(util.inspect(ast, {depth: null, colors: true}))
 console.log("EVALUATING\n----------------")
 ast.forEach(block => evaluate(block))
 console.log("SCOPE\n----------------")

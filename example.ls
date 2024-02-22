@@ -7,15 +7,14 @@ FUNCTION fizzbuzz WITH number DOES
         SET result TO FN ADD result CONCAT buzz END END
     END
     IF CMP result IS nothing END THEN
-        RETURN number END
-    ELSE
-        RETURN result END
+        SET result TO number END
     END
+    RETURN result END
 END
 
 SET counter TO one END
 LOOP
-IF CMP counter IS one hundred END THEN BREAK END END
+IF CMP counter GREATER twenty nine END THEN BREAK END END
 FN PRINT FN fizzbuzz WITH counter END END
 SET counter TO FN ADD counter PLUS one END END
 END

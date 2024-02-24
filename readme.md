@@ -27,7 +27,7 @@ FN PRINT FN fizzbuzz WITH counter END END
 SET counter TO FN ADD counter PLUS one END END
 END
 ```
-
+- The syntax is very flexible and some keywords can be changed to better enhance readability
 - Language keywords are always in UPPERCASE like SQL
 - Function arguments have to be named after the first. Naming the first argument is not allowed
 For example,  `ADD one PLUS one END`

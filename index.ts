@@ -213,6 +213,9 @@ function evaluate(block: Block | Token) {
         if (fn_name == "PRINT") console.log(evaluate(args[0]))
         if (fn_name == "MOD") return evaluate(args[0]) % evaluate(args[1])
         if (fn_name == "ADD") return evaluate(args[0]) + evaluate(args[1])
+        if (fn_name == "SUBTRACT") return evaluate(args[0]) - evaluate(args[1])
+        if (fn_name == "MULTIPLY") return evaluate(args[0]) * evaluate(args[1])
+        if (fn_name == "DIVIDE") return evaluate(args[0]) / evaluate(args[1])
         else if (functions.get(custom_fn_name) !== undefined) {
             ////console.log(`Calling ${custom_fn_name}`)
             let fn = functions.get(custom_fn_name)

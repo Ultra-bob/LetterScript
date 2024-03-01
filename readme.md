@@ -36,6 +36,10 @@ is the same as `add(1, plus=1)` in Python
 - Also there isn't any scoping so every variable is global
 - No types lol
 
+## Running code
+```sh
+npm run dev example.ls
+```
 
 ## Syntax highlighting
 If you want syntax highlighting, install the Highlight extension and paste this into your settings.json

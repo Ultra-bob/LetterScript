@@ -1,5 +1,5 @@
 FUNCTION fizzbuzz WITH number DOES
-    SET result TO twenty END
+    SET result TO nothing END
     IF CMP FN MOD number DIV three END IS zero END THEN
         SET result TO FN ADD result CONCAT fizz END END
     END

@@ -65,7 +65,9 @@ function whar(token: any): TokenType {
     return TokenType.Unknown
 }
 
-const code = fs.readFileSync("example.ls", "utf8")
+console.log(process.argv)
+
+const code = fs.readFileSync(process.argv[2], "utf8")
 
 function tokenize(code: string): Token[] {
     const words = code.split(/([A-Z]+)/g).map(match => match.trim()).filter(match => match !== "")
@@ -249,13 +251,15 @@ function evaluate(block: Block | Token) {
     return block.value
 }
 
+const debug = process.argv[3] && process.argv[3] === '--debug'
+
 if (!/^[a-zA-Z\n ]+$/g.test(code)) console.log("ERROR! Non-letter characters used")
 const tokens = tokenize(code)
 /////console.log(util.inspect(tokens, {depth: null, colors: true}))
 const ast = make_blocks(tokens, get_blocklevels(tokens))
 ////console.log(util.inspect(ast, {depth: null, colors: true}))
-console.log("EVALUATING\n----------------")
+if (debug) console.log("EVALUATING\n----------------")
 ast.forEach(block => evaluate(block))
-console.log("SCOPE\n----------------")
-console.log(functions)
-console.log(variables)
+if (debug) console.log("SCOPE\n----------------")
+if (debug) console.log(functions)
+if (debug) console.log(variables)
